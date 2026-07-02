@@ -27,6 +27,9 @@ import {
   LemonSlice,
   Blueberry,
   MangoCube,
+  StrawberryHalf,
+  MangoHalf,
+  Lemon,
 } from "./fruits";
 
 /** Colourful splash particles that bloom outward during section 3. */
@@ -391,6 +394,25 @@ function FruitOrbit() {
         speed={0.95}
         seed={20}
       />
+      <StrawberryHalf
+        position={[-1.6, -1.8, 1.2]}
+        scale={0.75}
+        speed={1.2}
+        seed={21}
+      />
+      <StrawberryHalf
+        position={[2.6, 1.9, 0.6]}
+        scale={0.65}
+        speed={1.05}
+        seed={22}
+      />
+      <MangoHalf
+        position={[-2.7, -1.1, -0.9]}
+        scale={0.95}
+        speed={0.85}
+        seed={23}
+      />
+      <Lemon position={[-3, 1.2, 1.3]} scale={0.8} speed={1.1} seed={24} />
     </group>
   );
 }

@@ -763,3 +763,333 @@ export function IceCube(props: FloatProps) {
     </group>
   );
 }
+
+const berryTaper = (t: number) => 0.45 + 0.55 * Math.pow(t, 0.7);
+
+/** Halved strawberry showing the white core and pink streaked flesh. */
+export function StrawberryHalf(props: FloatProps) {
+  const ref = useRef<THREE.Group>(null);
+  useFloat(ref, { ...props, rotationSpeed: (props.rotationSpeed ?? 1) * 1.3 });
+  const { shell, face, skinMap, cutMap } = useMemo(() => {
+    // Outer skin: half of the tapered berry (cut plane at z = 0).
+    const shellGeo = new THREE.SphereGeometry(0.42, 48, 48, 0, Math.PI);
+    const pos = shellGeo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const t = (v.y + 0.42) / 0.84;
+      const k = berryTaper(t);
+      pos.setXYZ(i, v.x * k, v.y * 1.2, v.z * k);
+    }
+    shellGeo.computeVertexNormals();
+    // Flat cut face matching the berry silhouette.
+    const steps = 32;
+    const right: Array<[number, number]> = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const yb = (t * 2 - 1) * 0.42;
+      const r = Math.sqrt(Math.max(0, 0.42 * 0.42 - yb * yb)) * berryTaper(t);
+      right.push([r, yb * 1.2]);
+    }
+    const shape = new THREE.Shape();
+    shape.moveTo(right[0][0], right[0][1]);
+    right.forEach(([x, y]) => shape.lineTo(x, y));
+    for (let i = steps; i >= 0; i--) shape.lineTo(-right[i][0], right[i][1]);
+    const faceGeo = new THREE.ShapeGeometry(shape, 24);
+    faceGeo.computeBoundingBox();
+    const bb = faceGeo.boundingBox!;
+    const uv = faceGeo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      uv.setXY(
+        i,
+        (uv.getX(i) - bb.min.x) / (bb.max.x - bb.min.x),
+        (uv.getY(i) - bb.min.y) / (bb.max.y - bb.min.y),
+      );
+    }
+    const skin = canvasTexture("strawberry-half-skin", (ctx, s) => {
+      const g = ctx.createLinearGradient(0, 0, 0, s);
+      g.addColorStop(0, "#f76d6d");
+      g.addColorStop(0.18, "#e8324e");
+      g.addColorStop(0.6, "#d42440");
+      g.addColorStop(1, "#c11c36");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, s, s);
+      // sunken golden seeds on the outer skin
+      const rows = 9;
+      const cols = 12;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = ((c + (r % 2 ? 0.5 : 0)) / cols) * s;
+          const y = ((r + 0.5) / rows) * s;
+          ctx.fillStyle = "rgba(120,15,30,0.7)";
+          ctx.beginPath();
+          ctx.ellipse(x, y, s * 0.016, s * 0.026, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#f5d76e";
+          ctx.beginPath();
+          ctx.ellipse(x, y, s * 0.01, s * 0.02, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    });
+    const cut = canvasTexture("strawberry-cut", (ctx, s) => {
+      // flesh: white heart fading to red rim
+      const g = ctx.createRadialGradient(
+        s * 0.5,
+        s * 0.55,
+        s * 0.05,
+        s * 0.5,
+        s * 0.55,
+        s * 0.52,
+      );
+      g.addColorStop(0, "#fff3ef");
+      g.addColorStop(0.35, "#ffc9cd");
+      g.addColorStop(0.75, "#f2607a");
+      g.addColorStop(1, "#d42440");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, s, s);
+      // white central core column
+      const core = ctx.createLinearGradient(s * 0.42, 0, s * 0.58, 0);
+      core.addColorStop(0, "rgba(255,247,242,0)");
+      core.addColorStop(0.5, "rgba(255,247,242,0.9)");
+      core.addColorStop(1, "rgba(255,247,242,0)");
+      ctx.fillStyle = core;
+      ctx.fillRect(s * 0.42, s * 0.12, s * 0.16, s * 0.75);
+      // pink streaks radiating from the core to the rim
+      ctx.lineWidth = s * 0.012;
+      for (let i = 0; i < 26; i++) {
+        const a = (i / 26) * Math.PI * 2;
+        const inner = s * 0.1;
+        const outer = s * (0.34 + Math.random() * 0.12);
+        ctx.strokeStyle =
+          i % 2 ? "rgba(255,255,255,0.55)" : "rgba(240,110,130,0.5)";
+        ctx.beginPath();
+        ctx.moveTo(
+          s * 0.5 + Math.cos(a) * inner,
+          s * 0.55 + Math.sin(a) * inner,
+        );
+        ctx.quadraticCurveTo(
+          s * 0.5 + Math.cos(a) * outer * 0.7,
+          s * 0.55 + Math.sin(a) * outer * 0.75,
+          s * 0.5 + Math.cos(a) * outer,
+          s * 0.55 + Math.sin(a) * outer,
+        );
+        ctx.stroke();
+      }
+    });
+    return { shell: shellGeo, face: faceGeo, skinMap: skin, cutMap: cut };
+  }, []);
+  return (
+    <group
+      ref={ref}
+      position={props.position}
+      scale={props.scale ?? 1}
+      rotation={[0.15, 2.6, 0.25]}
+    >
+      <mesh castShadow geometry={shell}>
+        <meshPhysicalMaterial
+          map={skinMap}
+          roughness={0.28}
+          clearcoat={0.9}
+          clearcoatRoughness={0.25}
+        />
+      </mesh>
+      <mesh geometry={face} position={[0, 0, 0.001]}>
+        <meshPhysicalMaterial
+          map={cutMap}
+          roughness={0.3}
+          clearcoat={0.6}
+          clearcoatRoughness={0.35}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** Hedgehog-cut mango half — scored flesh cubes popping out of the skin. */
+export function MangoHalf(props: FloatProps) {
+  const ref = useRef<THREE.Group>(null);
+  useFloat(ref, props);
+  const pulp = usePulpBump();
+  const skinMap = useMemo(
+    () =>
+      canvasTexture("mango-half-skin", (ctx, s) => {
+        const g = ctx.createLinearGradient(0, 0, s, s);
+        g.addColorStop(0, "#d6572f");
+        g.addColorStop(0.45, "#f28a35");
+        g.addColorStop(1, "#ffc24a");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, s, s);
+        speckles(
+          ctx,
+          s,
+          350,
+          ["rgba(120,60,20,0.18)", "rgba(255,230,170,0.16)"],
+          0.7,
+          1.8,
+        );
+      }),
+    [],
+  );
+  const cubes = useMemo(() => {
+    const out: Array<{
+      pos: [number, number, number];
+      rot: [number, number, number];
+      s: number;
+    }> = [];
+    const rows = 5;
+    const cols = 4;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const u = ((c + 0.5) / cols) * 2 - 1; // across width
+        const w = ((r + 0.5) / rows) * 2 - 1; // along length
+        const x = u * 0.3;
+        const z = w * 0.46;
+        const e = (x / 0.38) ** 2 + (z / 0.55) ** 2;
+        if (e > 1) continue;
+        const dome = Math.sqrt(Math.max(0, 1 - e));
+        out.push({
+          pos: [x, 0.1 + dome * 0.14, z],
+          rot: [w * 0.45, 0, -u * 0.45],
+          s: 0.12 + dome * 0.05,
+        });
+      }
+    }
+    return out;
+  }, []);
+  return (
+    <group
+      ref={ref}
+      position={props.position}
+      scale={props.scale ?? 1}
+      rotation={[0.55, 0.4, -0.25]}
+    >
+      {/* curved skin bowl */}
+      <mesh castShadow scale={[0.8, 0.55, 1.15]}>
+        <sphereGeometry
+          args={[0.5, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
+        />
+        <meshStandardMaterial
+          map={skinMap}
+          roughness={0.4}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* flesh dome under the cubes */}
+      <mesh scale={[0.76, 0.22, 1.1]}>
+        <sphereGeometry args={[0.5, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshPhysicalMaterial
+          color="#ffc24a"
+          bumpMap={pulp}
+          bumpScale={0.15}
+          roughness={0.3}
+          clearcoat={0.7}
+          clearcoatRoughness={0.3}
+        />
+      </mesh>
+      {/* scored flesh cubes */}
+      {cubes.map((c, i) => (
+        <RoundedBox
+          key={i}
+          args={[c.s, c.s, c.s]}
+          radius={0.02}
+          smoothness={2}
+          position={c.pos}
+          rotation={c.rot}
+          castShadow
+        >
+          <meshPhysicalMaterial
+            color="#ffb020"
+            bumpMap={pulp}
+            bumpScale={0.12}
+            roughness={0.24}
+            clearcoat={0.9}
+            clearcoatRoughness={0.25}
+          />
+        </RoundedBox>
+      ))}
+    </group>
+  );
+}
+
+/** Whole lemon with pitted skin and nipple tips. */
+export function Lemon(props: FloatProps) {
+  const ref = useRef<THREE.Group>(null);
+  useFloat(ref, props);
+  const geometry = useMemo(() => {
+    const geo = new THREE.SphereGeometry(0.42, 48, 48);
+    const pos = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const t = v.y / 0.42; // -1..1 pole to pole
+      // elongate and pull the poles into little nipples
+      const y = v.y * 1.18 + Math.sign(v.y) * Math.pow(Math.abs(t), 6) * 0.09;
+      pos.setXYZ(i, v.x * 0.82, y, v.z * 0.82);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
+  const maps = useMemo(() => {
+    const map = canvasTexture("lemon-map", (ctx, s) => {
+      const g = ctx.createLinearGradient(0, 0, s, s);
+      g.addColorStop(0, "#ffe14d");
+      g.addColorStop(0.5, "#ffd93b");
+      g.addColorStop(1, "#f5c518");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, s, s);
+      speckles(
+        ctx,
+        s,
+        700,
+        ["rgba(255,245,180,0.35)", "rgba(200,150,20,0.25)"],
+        0.8,
+        2.2,
+      );
+    });
+    const bump = canvasTexture(
+      "lemon-bump",
+      (ctx, s) => {
+        ctx.fillStyle = "#808080";
+        ctx.fillRect(0, 0, s, s);
+        speckles(
+          ctx,
+          s,
+          900,
+          ["rgba(40,40,40,0.5)", "rgba(220,220,220,0.35)"],
+          1,
+          2.2,
+        );
+      },
+      false,
+    );
+    return { map, bump };
+  }, []);
+  return (
+    <group
+      ref={ref}
+      position={props.position}
+      scale={props.scale ?? 1}
+      rotation={[0, 0, 0.9]}
+    >
+      <mesh castShadow geometry={geometry}>
+        <meshPhysicalMaterial
+          map={maps.map}
+          bumpMap={maps.bump}
+          bumpScale={0.35}
+          roughness={0.45}
+          clearcoat={0.4}
+          clearcoatRoughness={0.5}
+          sheen={0.25}
+          sheenColor="#fff0a0"
+        />
+      </mesh>
+      {/* green stem button */}
+      <mesh position={[0, 0.56, 0]}>
+        <cylinderGeometry args={[0.02, 0.035, 0.05, 8]} />
+        <meshStandardMaterial color="#5c7a2e" roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
