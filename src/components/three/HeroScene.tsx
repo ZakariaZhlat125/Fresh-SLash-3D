@@ -32,6 +32,18 @@ import {
   Lemon,
 } from "./fruits";
 
+/**
+ * Returns true when running on a mobile / low-end device.
+ * Checked once at module load so it never triggers a re-render.
+ */
+const isMobile: boolean = (() => {
+  if (typeof navigator === "undefined") return false;
+  const touch = navigator.maxTouchPoints > 0;
+  const ua = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const small = typeof window !== "undefined" && window.innerWidth < 768;
+  return touch || ua || small;
+})();
+
 /** Colourful splash particles that bloom outward during section 3. */
 function SplashParticles() {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -307,6 +319,7 @@ function SplashRibbon() {
 
 /** Fruits arranged on an orbiting ring around the glass. */
 function FruitOrbit() {
+  // On mobile we render only the most important fruits to stay within budget.
   const ring = useRef<THREE.Group>(null);
   useFrame((state) => {
     if (!ring.current) return;
@@ -319,6 +332,7 @@ function FruitOrbit() {
 
   return (
     <group ref={ring}>
+      {/* ---- Core fruits (always rendered) ---- */}
       <Orange position={[2.4, 0.3, 0.2]} scale={0.85} speed={1.1} seed={1} />
       <Mango position={[-2.2, 0.9, 0.6]} scale={0.9} speed={0.9} seed={2} />
       <Strawberry
@@ -333,29 +347,19 @@ function FruitOrbit() {
         speed={1}
         seed={4}
       />
-      <Orange position={[-2.6, -0.3, 1.2]} scale={0.6} speed={1.2} seed={5} />
-      <Strawberry
-        position={[2.2, -0.8, 1.4]}
-        scale={0.6}
-        speed={1.1}
-        seed={6}
-      />
       <MintLeaf position={[0.9, 1.9, 1.1]} scale={0.9} speed={1.4} seed={7} />
-      <MintLeaf position={[-1.1, 1.6, -0.6]} scale={0.7} speed={1.5} seed={8} />
-      <IceCube position={[1.2, -1.4, -0.4]} scale={0.6} speed={0.8} seed={9} />
-      <IceCube position={[-0.9, -1.2, 1.1]} scale={0.5} speed={0.9} seed={10} />
-      <Mango position={[0.2, -1.6, 1.6]} scale={0.55} speed={1} seed={11} />
+      <Blueberry
+        position={[0.6, 2.2, -1.3]}
+        scale={0.9}
+        speed={1.4}
+        seed={16}
+      />
+      <MangoCube position={[-0.4, 2, 1.8]} scale={0.85} speed={1.1} seed={19} />
       <OrangeSlice
         position={[2.7, 1.1, -0.8]}
         scale={0.8}
         speed={1.05}
         seed={12}
-      />
-      <OrangeSlice
-        position={[-1.5, -1.5, -1.8]}
-        scale={0.6}
-        speed={1.2}
-        seed={13}
       />
       <LemonSlice
         position={[-2.5, 1.7, -1]}
@@ -363,56 +367,101 @@ function FruitOrbit() {
         speed={0.95}
         seed={14}
       />
-      <LemonSlice
-        position={[1.9, -0.2, 2]}
-        scale={0.55}
-        speed={1.15}
-        seed={15}
-      />
-      <Blueberry
-        position={[0.6, 2.2, -1.3]}
-        scale={0.9}
-        speed={1.4}
-        seed={16}
-      />
-      <Blueberry
-        position={[-2.9, 0.4, -0.3]}
-        scale={0.75}
-        speed={1.25}
-        seed={17}
-      />
-      <Blueberry
-        position={[2.5, 0.9, 1.5]}
-        scale={0.65}
-        speed={1.35}
-        seed={18}
-      />
-      <MangoCube position={[-0.4, 2, 1.8]} scale={0.85} speed={1.1} seed={19} />
-      <MangoCube
-        position={[2.9, -0.9, -1.2]}
-        scale={0.7}
-        speed={0.95}
-        seed={20}
-      />
-      <StrawberryHalf
-        position={[-1.6, -1.8, 1.2]}
-        scale={0.75}
-        speed={1.2}
-        seed={21}
-      />
-      <StrawberryHalf
-        position={[2.6, 1.9, 0.6]}
-        scale={0.65}
-        speed={1.05}
-        seed={22}
-      />
-      <MangoHalf
-        position={[-2.7, -1.1, -0.9]}
-        scale={0.95}
-        speed={0.85}
-        seed={23}
-      />
-      <Lemon position={[-3, 1.2, 1.3]} scale={0.8} speed={1.1} seed={24} />
+      {/* ---- Extra fruits — desktop only ---- */}
+      {!isMobile && (
+        <>
+          <Orange
+            position={[-2.6, -0.3, 1.2]}
+            scale={0.6}
+            speed={1.2}
+            seed={5}
+          />
+          <Strawberry
+            position={[2.2, -0.8, 1.4]}
+            scale={0.6}
+            speed={1.1}
+            seed={6}
+          />
+          <MintLeaf
+            position={[-1.1, 1.6, -0.6]}
+            scale={0.7}
+            speed={1.5}
+            seed={8}
+          />
+          <IceCube
+            position={[1.2, -1.4, -0.4]}
+            scale={0.6}
+            speed={0.8}
+            seed={9}
+          />
+          <IceCube
+            position={[-0.9, -1.2, 1.1]}
+            scale={0.5}
+            speed={0.9}
+            seed={10}
+          />
+          <Mango
+            position={[0.2, -1.6, 1.6]}
+            scale={0.55}
+            speed={1}
+            seed={11}
+          />
+          <OrangeSlice
+            position={[-1.5, -1.5, -1.8]}
+            scale={0.6}
+            speed={1.2}
+            seed={13}
+          />
+          <LemonSlice
+            position={[1.9, -0.2, 2]}
+            scale={0.55}
+            speed={1.15}
+            seed={15}
+          />
+          <Blueberry
+            position={[-2.9, 0.4, -0.3]}
+            scale={0.75}
+            speed={1.25}
+            seed={17}
+          />
+          <Blueberry
+            position={[2.5, 0.9, 1.5]}
+            scale={0.65}
+            speed={1.35}
+            seed={18}
+          />
+          <MangoCube
+            position={[2.9, -0.9, -1.2]}
+            scale={0.7}
+            speed={0.95}
+            seed={20}
+          />
+          <StrawberryHalf
+            position={[-1.6, -1.8, 1.2]}
+            scale={0.75}
+            speed={1.2}
+            seed={21}
+          />
+          <StrawberryHalf
+            position={[2.6, 1.9, 0.6]}
+            scale={0.65}
+            speed={1.05}
+            seed={22}
+          />
+          <MangoHalf
+            position={[-2.7, -1.1, -0.9]}
+            scale={0.95}
+            speed={0.85}
+            seed={23}
+          />
+          <Lemon
+            position={[-3, 1.2, 1.3]}
+            scale={0.8}
+            speed={1.1}
+            seed={24}
+          />
+        </>
+      )}
     </group>
   );
 }
@@ -493,10 +542,10 @@ export function HeroScene() {
         <SplashRibbon />
         <FruitOrbit />
         <SplashParticles />
-        <IceStorm />
-        <MintWhirl />
+        {!isMobile && <IceStorm />}
+        {!isMobile && <MintWhirl />}
         <Sparkles
-          count={60}
+          count={isMobile ? 20 : 60}
           scale={9}
           size={3}
           speed={0.35}
@@ -505,29 +554,33 @@ export function HeroScene() {
         />
       </group>
 
-      <ContactShadows
-        position={[0, -2, 0]}
-        opacity={0.35}
-        scale={12}
-        blur={2.8}
-        far={5}
-        color="#c47a1a"
-      />
+      {!isMobile && (
+        <ContactShadows
+          position={[0, -2, 0]}
+          opacity={0.35}
+          scale={12}
+          blur={2.8}
+          far={5}
+          color="#c47a1a"
+        />
+      )}
 
-      <EffectComposer enableNormalPass={false}>
-        <DepthOfField
-          focusDistance={0.02}
-          focalLength={0.04}
-          bokehScale={2.5}
-        />
-        <Bloom
-          intensity={0.7}
-          luminanceThreshold={0.7}
-          luminanceSmoothing={0.3}
-          mipmapBlur
-        />
-        <Vignette eskil={false} offset={0.15} darkness={0.6} />
-      </EffectComposer>
+      {!isMobile && (
+        <EffectComposer enableNormalPass={false}>
+          <DepthOfField
+            focusDistance={0.02}
+            focalLength={0.04}
+            bokehScale={2.5}
+          />
+          <Bloom
+            intensity={0.7}
+            luminanceThreshold={0.7}
+            luminanceSmoothing={0.3}
+            mipmapBlur
+          />
+          <Vignette eskil={false} offset={0.15} darkness={0.6} />
+        </EffectComposer>
+      )}
     </>
   );
 }
