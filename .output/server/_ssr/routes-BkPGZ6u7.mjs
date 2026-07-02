@@ -8,7 +8,7 @@ import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { i as wt, n as dt, r as qt, t as ce } from "../_libs/@react-three/postprocessing+[...].mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-cz4nJ7XS.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-BkPGZ6u7.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function cn(...inputs) {
@@ -1258,6 +1258,324 @@ function IceCube(props) {
 		})]
 	});
 }
+var berryTaper = (t) => .45 + .55 * Math.pow(t, .7);
+/** Halved strawberry showing the white core and pink streaked flesh. */
+function StrawberryHalf(props) {
+	const ref = (0, import_react.useRef)(null);
+	useFloat(ref, {
+		...props,
+		rotationSpeed: (props.rotationSpeed ?? 1) * 1.3
+	});
+	const { shell, face, skinMap, cutMap } = (0, import_react.useMemo)(() => {
+		const shellGeo = new SphereGeometry(.42, 48, 48, 0, Math.PI);
+		const pos = shellGeo.attributes.position;
+		const v = new Vector3();
+		for (let i = 0; i < pos.count; i++) {
+			v.fromBufferAttribute(pos, i);
+			const k = berryTaper((v.y + .42) / .84);
+			pos.setXYZ(i, v.x * k, v.y * 1.2, v.z * k);
+		}
+		shellGeo.computeVertexNormals();
+		const steps = 32;
+		const right = [];
+		for (let i = 0; i <= steps; i++) {
+			const t = i / steps;
+			const yb = (t * 2 - 1) * .42;
+			const r = Math.sqrt(Math.max(0, .42 * .42 - yb * yb)) * berryTaper(t);
+			right.push([r, yb * 1.2]);
+		}
+		const shape = new Shape();
+		shape.moveTo(right[0][0], right[0][1]);
+		right.forEach(([x, y]) => shape.lineTo(x, y));
+		for (let i = steps; i >= 0; i--) shape.lineTo(-right[i][0], right[i][1]);
+		const faceGeo = new ShapeGeometry(shape, 24);
+		faceGeo.computeBoundingBox();
+		const bb = faceGeo.boundingBox;
+		const uv = faceGeo.attributes.uv;
+		for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) - bb.min.x) / (bb.max.x - bb.min.x), (uv.getY(i) - bb.min.y) / (bb.max.y - bb.min.y));
+		return {
+			shell: shellGeo,
+			face: faceGeo,
+			skinMap: canvasTexture("strawberry-half-skin", (ctx, s) => {
+				const g = ctx.createLinearGradient(0, 0, 0, s);
+				g.addColorStop(0, "#f76d6d");
+				g.addColorStop(.18, "#e8324e");
+				g.addColorStop(.6, "#d42440");
+				g.addColorStop(1, "#c11c36");
+				ctx.fillStyle = g;
+				ctx.fillRect(0, 0, s, s);
+				const rows = 9;
+				const cols = 12;
+				for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+					const x = (c + (r % 2 ? .5 : 0)) / cols * s;
+					const y = (r + .5) / rows * s;
+					ctx.fillStyle = "rgba(120,15,30,0.7)";
+					ctx.beginPath();
+					ctx.ellipse(x, y, s * .016, s * .026, 0, 0, Math.PI * 2);
+					ctx.fill();
+					ctx.fillStyle = "#f5d76e";
+					ctx.beginPath();
+					ctx.ellipse(x, y, s * .01, s * .02, 0, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			}),
+			cutMap: canvasTexture("strawberry-cut", (ctx, s) => {
+				const g = ctx.createRadialGradient(s * .5, s * .55, s * .05, s * .5, s * .55, s * .52);
+				g.addColorStop(0, "#fff3ef");
+				g.addColorStop(.35, "#ffc9cd");
+				g.addColorStop(.75, "#f2607a");
+				g.addColorStop(1, "#d42440");
+				ctx.fillStyle = g;
+				ctx.fillRect(0, 0, s, s);
+				const core = ctx.createLinearGradient(s * .42, 0, s * .58, 0);
+				core.addColorStop(0, "rgba(255,247,242,0)");
+				core.addColorStop(.5, "rgba(255,247,242,0.9)");
+				core.addColorStop(1, "rgba(255,247,242,0)");
+				ctx.fillStyle = core;
+				ctx.fillRect(s * .42, s * .12, s * .16, s * .75);
+				ctx.lineWidth = s * .012;
+				for (let i = 0; i < 26; i++) {
+					const a = i / 26 * Math.PI * 2;
+					const inner = s * .1;
+					const outer = s * (.34 + Math.random() * .12);
+					ctx.strokeStyle = i % 2 ? "rgba(255,255,255,0.55)" : "rgba(240,110,130,0.5)";
+					ctx.beginPath();
+					ctx.moveTo(s * .5 + Math.cos(a) * inner, s * .55 + Math.sin(a) * inner);
+					ctx.quadraticCurveTo(s * .5 + Math.cos(a) * outer * .7, s * .55 + Math.sin(a) * outer * .75, s * .5 + Math.cos(a) * outer, s * .55 + Math.sin(a) * outer);
+					ctx.stroke();
+				}
+			})
+		};
+	}, []);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("group", {
+		ref,
+		position: props.position,
+		scale: props.scale ?? 1,
+		rotation: [
+			.15,
+			2.6,
+			.25
+		],
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("mesh", {
+			castShadow: true,
+			geometry: shell,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshPhysicalMaterial", {
+				map: skinMap,
+				roughness: .28,
+				clearcoat: .9,
+				clearcoatRoughness: .25
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("mesh", {
+			geometry: face,
+			position: [
+				0,
+				0,
+				.001
+			],
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshPhysicalMaterial", {
+				map: cutMap,
+				roughness: .3,
+				clearcoat: .6,
+				clearcoatRoughness: .35,
+				side: 2
+			})
+		})]
+	});
+}
+/** Hedgehog-cut mango half — scored flesh cubes popping out of the skin. */
+function MangoHalf(props) {
+	const ref = (0, import_react.useRef)(null);
+	useFloat(ref, props);
+	const pulp = usePulpBump();
+	const skinMap = (0, import_react.useMemo)(() => canvasTexture("mango-half-skin", (ctx, s) => {
+		const g = ctx.createLinearGradient(0, 0, s, s);
+		g.addColorStop(0, "#d6572f");
+		g.addColorStop(.45, "#f28a35");
+		g.addColorStop(1, "#ffc24a");
+		ctx.fillStyle = g;
+		ctx.fillRect(0, 0, s, s);
+		speckles(ctx, s, 350, ["rgba(120,60,20,0.18)", "rgba(255,230,170,0.16)"], .7, 1.8);
+	}), []);
+	const cubes = (0, import_react.useMemo)(() => {
+		const out = [];
+		const rows = 5;
+		const cols = 4;
+		for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+			const u = (c + .5) / cols * 2 - 1;
+			const w = (r + .5) / rows * 2 - 1;
+			const x = u * .3;
+			const z = w * .46;
+			const e = (x / .38) ** 2 + (z / .55) ** 2;
+			if (e > 1) continue;
+			const dome = Math.sqrt(Math.max(0, 1 - e));
+			out.push({
+				pos: [
+					x,
+					.1 + dome * .14,
+					z
+				],
+				rot: [
+					w * .45,
+					0,
+					-u * .45
+				],
+				s: .12 + dome * .05
+			});
+		}
+		return out;
+	}, []);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("group", {
+		ref,
+		position: props.position,
+		scale: props.scale ?? 1,
+		rotation: [
+			.55,
+			.4,
+			-.25
+		],
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("mesh", {
+				castShadow: true,
+				scale: [
+					.8,
+					.55,
+					1.15
+				],
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("sphereGeometry", { args: [
+					.5,
+					32,
+					16,
+					0,
+					Math.PI * 2,
+					Math.PI / 2,
+					Math.PI / 2
+				] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshStandardMaterial", {
+					map: skinMap,
+					roughness: .4,
+					side: 2
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("mesh", {
+				scale: [
+					.76,
+					.22,
+					1.1
+				],
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("sphereGeometry", { args: [
+					.5,
+					32,
+					16,
+					0,
+					Math.PI * 2,
+					0,
+					Math.PI / 2
+				] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshPhysicalMaterial", {
+					color: "#ffc24a",
+					bumpMap: pulp,
+					bumpScale: .15,
+					roughness: .3,
+					clearcoat: .7,
+					clearcoatRoughness: .3
+				})]
+			}),
+			cubes.map((c, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RoundedBox, {
+				args: [
+					c.s,
+					c.s,
+					c.s
+				],
+				radius: .02,
+				smoothness: 2,
+				position: c.pos,
+				rotation: c.rot,
+				castShadow: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshPhysicalMaterial", {
+					color: "#ffb020",
+					bumpMap: pulp,
+					bumpScale: .12,
+					roughness: .24,
+					clearcoat: .9,
+					clearcoatRoughness: .25
+				})
+			}, i))
+		]
+	});
+}
+/** Whole lemon with pitted skin and nipple tips. */
+function Lemon(props) {
+	const ref = (0, import_react.useRef)(null);
+	useFloat(ref, props);
+	const geometry = (0, import_react.useMemo)(() => {
+		const geo = new SphereGeometry(.42, 48, 48);
+		const pos = geo.attributes.position;
+		const v = new Vector3();
+		for (let i = 0; i < pos.count; i++) {
+			v.fromBufferAttribute(pos, i);
+			const t = v.y / .42;
+			const y = v.y * 1.18 + Math.sign(v.y) * Math.pow(Math.abs(t), 6) * .09;
+			pos.setXYZ(i, v.x * .82, y, v.z * .82);
+		}
+		geo.computeVertexNormals();
+		return geo;
+	}, []);
+	const maps = (0, import_react.useMemo)(() => {
+		return {
+			map: canvasTexture("lemon-map", (ctx, s) => {
+				const g = ctx.createLinearGradient(0, 0, s, s);
+				g.addColorStop(0, "#ffe14d");
+				g.addColorStop(.5, "#ffd93b");
+				g.addColorStop(1, "#f5c518");
+				ctx.fillStyle = g;
+				ctx.fillRect(0, 0, s, s);
+				speckles(ctx, s, 700, ["rgba(255,245,180,0.35)", "rgba(200,150,20,0.25)"], .8, 2.2);
+			}),
+			bump: canvasTexture("lemon-bump", (ctx, s) => {
+				ctx.fillStyle = "#808080";
+				ctx.fillRect(0, 0, s, s);
+				speckles(ctx, s, 900, ["rgba(40,40,40,0.5)", "rgba(220,220,220,0.35)"], 1, 2.2);
+			}, false)
+		};
+	}, []);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("group", {
+		ref,
+		position: props.position,
+		scale: props.scale ?? 1,
+		rotation: [
+			0,
+			0,
+			.9
+		],
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("mesh", {
+			castShadow: true,
+			geometry,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshPhysicalMaterial", {
+				map: maps.map,
+				bumpMap: maps.bump,
+				bumpScale: .35,
+				roughness: .45,
+				clearcoat: .4,
+				clearcoatRoughness: .5,
+				sheen: .25,
+				sheenColor: "#fff0a0"
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("mesh", {
+			position: [
+				0,
+				.56,
+				0
+			],
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("cylinderGeometry", { args: [
+				.02,
+				.035,
+				.05,
+				8
+			] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meshStandardMaterial", {
+				color: "#5c7a2e",
+				roughness: .85
+			})]
+		})]
+	});
+}
 /** Colourful splash particles that bloom outward during section 3. */
 function SplashParticles() {
 	const ref = (0, import_react.useRef)(null);
@@ -1724,6 +2042,46 @@ function FruitOrbit() {
 				scale: .7,
 				speed: .95,
 				seed: 20
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StrawberryHalf, {
+				position: [
+					-1.6,
+					-1.8,
+					1.2
+				],
+				scale: .75,
+				speed: 1.2,
+				seed: 21
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StrawberryHalf, {
+				position: [
+					2.6,
+					1.9,
+					.6
+				],
+				scale: .65,
+				speed: 1.05,
+				seed: 22
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MangoHalf, {
+				position: [
+					-2.7,
+					-1.1,
+					-.9
+				],
+				scale: .95,
+				speed: .85,
+				seed: 23
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Lemon, {
+				position: [
+					-3,
+					1.2,
+					1.3
+				],
+				scale: .8,
+				speed: 1.1,
+				seed: 24
 			})
 		]
 	});

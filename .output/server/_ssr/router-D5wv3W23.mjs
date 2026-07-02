@@ -4,7 +4,7 @@ import { c as HeadContent, d as Outlet, f as lazyRouteComponent, g as useRouter,
 import { p as require_jsx_runtime } from "../_libs/@react-three/drei+[...].mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-Bt8sPXae.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-D5wv3W23.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var styles_default = "/assets/styles-DrU108Wf.css";
@@ -192,7 +192,7 @@ var Route$1 = createFileRoute("/sitemap.xml")({ server: { handlers: { GET: async
 		"Cache-Control": "public, max-age=3600"
 	} });
 } } } });
-var $$splitComponentImporter = () => import("./routes-cz4nJ7XS.mjs");
+var $$splitComponentImporter = () => import("./routes-BkPGZ6u7.mjs");
 var Route = createFileRoute("/")({
 	head: () => ({ meta: [
 		{ title: "Squeeze — Premium Cold-Pressed Juices, Freshly Made" },
